@@ -8,6 +8,8 @@ import { EXAMPLE_JSON, EXAMPLE_PLAN_ID, EXAMPLE_SVG, GALLERY } from "./example.j
 export interface SiteInfo {
   baseUrl: string;
   network: string;
+  /** Further networks the 402 terms accept (X402_EXTRA_NETWORKS). */
+  extraNetworks?: readonly string[];
   /** e.g. "$0.02" */
   price: string;
   vectorPrice: string;
@@ -30,7 +32,27 @@ export const money = (p: string): string => {
   const decimals = (String(n).split(".")[1] ?? "").length;
   return `$${n.toFixed(Math.max(2, decimals))}`;
 };
-export const networkName = (n: string) => (n === "eip155:8453" ? "Base" : n === "eip155:84532" ? "Base Sepolia (testnet)" : n);
+export const networkName = (n: string) =>
+  ({ "eip155:8453": "Base", "eip155:84532": "Base Sepolia (testnet)", "eip155:137": "Polygon", "eip155:42161": "Arbitrum One" })[n] ?? n;
+/** Every accepted network as prose, e.g. "Base, Polygon or Arbitrum One"; `ids` appends each CAIP-2 id. */
+export const networkList = (info: Pick<SiteInfo, "network" | "extraNetworks">, ids = false) => {
+  const names = [info.network, ...(info.extraNetworks ?? [])].map((n) => (ids ? `${networkName(n)} (${n})` : networkName(n)));
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} or ${names.at(-1)}` : names[0]!;
+};
+/** schema.org Dataset markup, so dataset search engines can index the catalogue. */
+const datasetJsonLd = (info: SiteInfo) =>
+  JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: "Archibase floor plans",
+    description: `${fmt(info.catalogue.distinctLayouts)} distinct real floor plans (floorplans) as room adjacency graphs and metric vector geometry, with a licence and attribution on every record.`,
+    url: `${info.siteUrl}/`,
+    keywords: ["floor plans", "floorplans", "architecture", "room adjacency graph", "spatial AI"],
+    isAccessibleForFree: false,
+    license: `${info.siteUrl}/docs#terms`,
+    creator: { "@type": "Organization", name: "Archibase", url: `${info.siteUrl}/` },
+    isBasedOn: info.catalogue.sources.map((s) => ({ "@type": "CreativeWork", name: s.name, creditText: s.by })),
+  }).replace(/</g, "\\u003c");
 
 /** Shared stylesheet for every page. */
 const CSS = `
@@ -148,7 +170,7 @@ ${info.siteUrl ? `<meta property="og:url" content="${esc(info.siteUrl + page.pat
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 4h24v24H4z' fill='none' stroke='%231f4fd1' stroke-width='3'/%3E%3Cpath d='M4 16h12v12M16 4v8' fill='none' stroke='%231f4fd1' stroke-width='3'/%3E%3C/svg%3E">
-<style>${CSS}${page.css ?? ""}</style>
+${info.siteUrl && page.path === "/" ? `<script type="application/ld+json">${datasetJsonLd(info)}</script>\n` : ""}<style>${CSS}${page.css ?? ""}</style>
 </head>
 <body>
 ${testnet ? `<div class="banner"><div class="wrap">This is the <strong>testnet</strong> deployment: payments use test USDC on Base Sepolia.</div></div>` : ""}
@@ -173,7 +195,7 @@ export function pageEnd(info: SiteInfo): string {
 
 export function landingPage(info: SiteInfo): string {
   const base = esc(info.baseUrl);
-  const net = esc(networkName(info.network));
+  const net = esc(networkList(info));
   const price = esc(money(info.price));
   const vprice = esc(money(info.vectorPrice));
   const testnet = info.network !== "eip155:8453";
@@ -326,7 +348,7 @@ curl -i "${base}/api/v1/plans/search?bedrooms=2&amp;m2_max=70"</code></pre></div
 export function llmsTxt(info: SiteInfo): string {
   return `# Archibase
 
-> The only structured, license-clean, machine-native floorplan corpus. Built for spatial AI, generative design, and architecture agents. Homes plus offices, industrial buildings, stations, shops and public buildings as room adjacency graphs (rooms with type, m², window count; door/opening/entrance edges), building type, provenance and metric vector geometry. ${fmt(info.catalogue.distinctLayouts)} distinct layouts. Paid per request with x402 in USDC on ${networkName(info.network)} (${info.network}): no account needed.
+> The only structured, license-clean, machine-native floorplan corpus. Built for spatial AI, generative design, and architecture agents. Homes plus offices, industrial buildings, stations, shops and public buildings as room adjacency graphs (rooms with type, m², window count; door/opening/entrance edges), building type, provenance and metric vector geometry. ${fmt(info.catalogue.distinctLayouts)} distinct layouts. Paid per request with x402 in USDC on ${networkList(info, true)}: no account needed.
 
 ## API
 

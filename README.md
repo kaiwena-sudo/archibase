@@ -2,7 +2,7 @@
 
 **The only structured, license-clean, machine-native floorplan corpus. Built for spatial AI, generative design, and architecture agents.** 📐🏗️
 
-Agents get real floor plans as room graphs and metric geometry and pay per call in USDC on Base with [x402](https://x402.org) (v2): **$0.02 per search** and **$0.10 per plan's geometry**.
+Agents get real floor plans as room graphs and metric geometry and pay per call in USDC on Base, Polygon or Arbitrum One with [x402](https://x402.org) (v2): **$0.02 per search** and **$0.10 per plan's geometry**.
 
 Stack: Hono on Node (portable to Cloudflare Workers), `@x402/hono` + `@x402/evm` for payments, and a JSON file or Supabase for storage.
 

@@ -2,7 +2,7 @@
  * /docs: human-readable API reference and data terms. Machine-readable equivalents are the
  * x402 discovery document (/.well-known/x402.json) and /llms.txt.
  */
-import { esc, fmt, money, networkName, pageEnd, pageStart, type SiteInfo } from "./landing.js";
+import { esc, fmt, money, networkList, pageEnd, pageStart, type SiteInfo } from "./landing.js";
 
 const DOCS_CSS = `
 .docs{display:grid;grid-template-columns:200px minmax(0,1fr);gap:40px;padding-top:40px;padding-bottom:56px}
@@ -30,7 +30,7 @@ export function docsPage(info: SiteInfo): string {
   const base = esc(info.baseUrl);
   const price = esc(money(info.price));
   const vprice = esc(money(info.vectorPrice));
-  const net = esc(networkName(info.network));
+  const net = esc(networkList(info, true));
   const contact = info.contactEmail
     ? `<a href="mailto:${esc(info.contactEmail)}">${esc(info.contactEmail)}</a>`
     : "the project maintainers";
@@ -60,7 +60,7 @@ ${table(["Endpoint", "Price", "Returns"], [
 <p>For AI assistants, the <code>archibase-mcp</code> server wraps both endpoints with spending limits. See the quick start on the <a href="/#start">home page</a>.</p>
 
 <h2 id="payment">Payment (x402)</h2>
-<p>Archibase uses <a href="https://x402.org">x402</a> v2. Paid calls settle in USDC on ${net} (<code>${esc(info.network)}</code>). The payment is a signed USDC authorisation that the facilitator submits, so the paying wallet needs no ETH for gas.</p>
+<p>Archibase uses <a href="https://x402.org">x402</a> v2. Paid calls settle in USDC on ${net}. The payment is a signed USDC authorisation that the facilitator submits, so the paying wallet needs no ETH for gas.</p>
 <ol>
   <li>Call an endpoint without payment. A valid request returns <code>402 Payment Required</code> with a <code>PAYMENT-REQUIRED</code> header (base64 JSON) and the same terms in the body: amount in USDC base units (6 decimals), asset, network and recipient.</li>
   <li>Sign the payment with an x402 client and repeat the request with the <code>PAYMENT-SIGNATURE</code> header (<code>X-PAYMENT</code> is also accepted).</li>

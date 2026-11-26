@@ -167,3 +167,25 @@ describe("explorer page", () => {
     expect(llms).toContain("ARCHIBASE_API_KEY");
   });
 });
+
+describe("files directories and search engines look for", () => {
+  const app = makeApp({ siteUrl: "https://archibase.dev" });
+
+  it("serves an icon at the API root", async () => {
+    const res = await app.request("/favicon.ico");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/x-icon");
+    expect([...new Uint8Array(await res.arrayBuffer()).slice(0, 4)]).toEqual([0, 0, 1, 0]);
+  });
+
+  it("lists the pages in a sitemap on the canonical origin", async () => {
+    const xml = await (await app.request("/sitemap.xml")).text();
+    for (const path of ["/", "/docs", "/explore", "/skills"]) expect(xml).toContain(`<loc>https://archibase.dev${path}</loc>`);
+  });
+
+  it("marks the home page up as a dataset", async () => {
+    const html = await (await app.request("/", { headers: { Accept: "text/html" } })).text();
+    const json = /<script type="application\/ld\+json">(.*?)<\/script>/.exec(html)?.[1];
+    expect(JSON.parse(json!)).toMatchObject({ "@type": "Dataset", url: "https://archibase.dev/" });
+  });
+});

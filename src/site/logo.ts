@@ -10,3 +10,7 @@ export const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 51
   </g>
 </svg>
 `;
+
+/** The logo as a 48x48 icon (PNG inside ICO), served at /favicon.ico; directories read it from the API root. */
+export const FAVICON_ICO_BASE64 =
+  "AAABAAEAMDAAAAEAIABxAQAAFgAAAIlQTkcNChoKAAAADUlIRFIAAAAwAAAAMAgGAAAAVwL5hwAAAThJREFUeNpjYMACuAUUHIB4PhDfB+L/A4zvQ93iwEAIABUZAPH+QeBoXBjkNgN8jn8/iB0Pw+8xPDGEHI/dE4M82eBMTsgZ9v8QxQ4M0Bw+VD0wn2GQFJVkF7EMQ9jxYEySBzQcw+mCaeKBjHWX/9de/kMXDLKLqh4AhQq9HA/DxMYEyR4oO/7uf8KioxTh/N0PUEIbJg4ym+YeAFlEacZzKerD6lCQ2aMeGPXAqAdGPTDqgVEPjHpgWHuAVOxdN2doewBbjNmmNgycB4htjeLzgJCM3v+grlUYsTOo8gA5eWbUA/T0gFlk0X9939Sh6QGQ42HyCqaeQ88DQ6IiG/XAqAeoVJFhUz+gwypDcmBryA8tDovB3cE8vD7kJziG/BTT0J7kG/LTrMNionvILzUYFos9hupyGwAL4gy+h2B6SwAAAABJRU5ErkJggg==";

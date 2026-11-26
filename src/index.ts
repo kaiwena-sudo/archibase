@@ -16,10 +16,10 @@ import { catalogueProvider } from "./site/catalogue.js";
 import { EXPLORE_JS } from "./site/client-bundle.js";
 import { skillAsset, skillIndex, skillsPage } from "./site/skills.js";
 import { explorePage } from "./site/explore.js";
-import { LOGO_SVG } from "./site/logo.js";
+import { FAVICON_ICO_BASE64, LOGO_SVG } from "./site/logo.js";
 import { SECURITY_HEADERS } from "./site/security.js";
 import { docsPage } from "./site/docs.js";
-import { landingPage, llmsTxt, type SiteInfo } from "./site/landing.js";
+import { esc, landingPage, llmsTxt, type SiteInfo } from "./site/landing.js";
 import { OG_PNG_BASE64 } from "./site/og.js";
 import { SAMPLE_PLANS, SAMPLE_VECTORS } from "./site/sample-data.js";
 import { createVectorStore, MemoryVectorStore, NoVectorStore, vectorInFeet, withGeometry, type VectorStore } from "./db/vectors.js";
@@ -46,10 +46,10 @@ const PLAN_ID_PLACEHOLDERS = new Set([":plan_id", "{plan_id}"]);
 const SAMPLE_PATH = "/api/v1/sample";
 const COUNT_PATH = "/api/v1/count";
 const VECTOR_DESCRIPTION =
-  "Vector geometry for one floor plan: room polygons (ids match the adjacency graph), doors and windows, " +
+  "Vector geometry for one floor plan (floorplan): room polygons (ids match the adjacency graph), doors and windows, " +
   "in metres (or feet with units=imperial).";
 const SEARCH_DESCRIPTION =
-  "Search architectural floor plans. Returns structured JSON records with room adjacency graphs " +
+  "Search architectural floor plans (floorplans). Returns structured JSON records with room adjacency graphs " +
   "and links to vector (geometry) schemas.";
 
 // ---------- Schemas shared by validation, discovery, and the bazaar extension ----------
@@ -421,6 +421,7 @@ export function createApp({ store, gateway, vectors = new NoVectorStore(), publi
   const siteInfo = async (c: Context): Promise<SiteInfo> => ({
     baseUrl: baseUrl(c),
     network: cfg.network,
+    extraNetworks: cfg.extraNetworks,
     price: cfg.price,
     vectorPrice: cfg.vectorPrice,
     contactEmail,
@@ -490,6 +491,23 @@ export function createApp({ store, gateway, vectors = new NoVectorStore(), publi
 
   app.get("/logo.svg", () => new Response(LOGO_SVG, { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" } }));
 
+  app.get("/favicon.ico", () => {
+    const bytes = Uint8Array.from(atob(FAVICON_ICO_BASE64), (ch) => ch.charCodeAt(0));
+    return new Response(bytes, { headers: { "Content-Type": "image/x-icon", "Cache-Control": "public, max-age=86400" } });
+  });
+
+  // The human-readable pages, for search engines.
+  app.get("/sitemap.xml", (c) => {
+    cacheHeader(c);
+    const origin = siteUrl ?? baseUrl(c);
+    const urls = ["/", "/docs", "/explore", "/skills"].map((path) => `  <url><loc>${esc(origin + path)}</loc></url>`).join("\n");
+    return c.body(
+      `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
+      200,
+      { "Content-Type": "application/xml; charset=utf-8" },
+    );
+  });
+
   // satring.com domain verification (challenge issued from its verify page; expires 30 min after generation).
   app.get("/.well-known/satring-verify", () =>
     new Response("7b0c5ef2a2ea970006c1d3c22b45892307eea9fc1670e69abd07341eb2945e3d\n", { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } }),
@@ -521,7 +539,7 @@ export function createApp({ store, gateway, vectors = new NoVectorStore(), publi
       name: "Archibase",
       description: "AI-ready architectural floor plan data: room adjacency graphs, vector schemas, metadata.",
       payTo: cfg.walletAddress,
-      networks: [{ network: cfg.network, name: NETWORK_NAMES[cfg.network] ?? cfg.network }],
+      networks: paymentNetworks(cfg).map((network) => ({ network, name: NETWORK_NAMES[network] ?? network })),
       facilitator: cfg.mock ? "mock (development only — no funds move)" : cfg.facilitatorUrl,
       paymentHeaders: { request: ["PAYMENT-SIGNATURE", "X-PAYMENT"], challenge: "PAYMENT-REQUIRED", receipt: "PAYMENT-RESPONSE" },
       resources: [
