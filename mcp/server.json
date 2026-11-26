@@ -1,0 +1,25 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.kaiwena-sudo/archibase",
+  "title": "Archibase floor plans",
+  "description": "Structured, license-clean floor plan data for AI agents. Pay per call in USDC via x402.",
+  "version": "0.1.2",
+  "repository": { "url": "https://github.com/kaiwena-sudo/archibase", "source": "github", "subfolder": "mcp" },
+  "websiteUrl": "https://archibase.dev",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "archibase-mcp",
+      "version": "0.1.2",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        { "name": "ARCHIBASE_API_KEY", "description": "API key (ak_…) issued on request for trials and partners, instead of a wallet. Don't set together with ARCHIBASE_PRIVATE_KEY.", "isRequired": false, "isSecret": true, "format": "string" },
+        { "name": "ARCHIBASE_PRIVATE_KEY", "description": "Private key of a dedicated spending wallet holding a little USDC on Base. Without it, paid tools only report prices.", "isRequired": false, "isSecret": true, "format": "string" },
+        { "name": "ARCHIBASE_EXPECTED_PAY_TO", "description": "Trusted receiver address for wallet payments. Required with ARCHIBASE_PRIVATE_KEY; verify it through a trusted project channel.", "isRequired": false, "isSecret": false, "format": "string" },
+        { "name": "ARCHIBASE_BUDGET_USD", "description": "Maximum total spend per session in US dollars (default 2)", "isRequired": false, "format": "number" },
+        { "name": "ARCHIBASE_MAX_PRICE_USD", "description": "Maximum price of a single call in US dollars (default 0.25)", "isRequired": false, "format": "number" },
+        { "name": "ARCHIBASE_NETWORK", "description": "eip155:8453 (Base, default) or eip155:84532 (Base Sepolia testnet)", "isRequired": false, "format": "string" }
+      ]
+    }
+  ]
+}

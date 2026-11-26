@@ -1,0 +1,69 @@
+# Cloudflare Workers deployment for Archibase.
+#   npx wrangler dev      -> local dev server (http://localhost:8787)
+#   npx wrangler deploy   -> deploy
+name = "archibase"
+main = "src/worker.ts"
+compatibility_date = "2026-10-01"
+# node:crypto (mock facilitator) and Buffer (@x402/core header encoding)
+compatibility_flags = ["nodejs_compat"]
+# Custom domain (zone archibase.dev on this Cloudflare account). Wrangler creates the DNS record.
+# The workers.dev address keeps working too. Must stay above the first [table] header.
+routes = [{ pattern = "testnet.archibase.dev", custom_domain = true }]
+
+# Workers Logs: console output (e.g. "[x402] facilitator settle failed: ...") is kept and searchable
+# in the dashboard (Workers & Pages -> the Worker -> Logs). Inherited by [env.mainnet].
+[observability]
+enabled = true
+
+[vars]
+X402_NETWORK = "eip155:84532"         # eip155:8453 = Base mainnet (needs a mainnet facilitator)
+PRICE_USD = "0.02"
+VECTOR_PRICE_USD = "0.10"
+# Geometry: read from Supabase (floor_plan_vectors) when DATABASE_URL is Supabase. Override with
+# VECTOR_STORE_URL = "https://<bucket>" (files + index.json) or "none".
+FACILITATOR_URL = "https://x402.org/facilitator"
+# Set WALLET_ADDRESS as a Worker secret before deploying.
+# Set DATABASE_URL to your own Supabase project, or bundle your own data/plans.json.
+PUBLIC_BASE_URL = "https://testnet.archibase.dev"
+SITE_URL = "https://testnet.archibase.dev"           # canonical page address (share tags)
+#
+# Secrets — never put these in this file:
+#   npx wrangler secret put WALLET_ADDRESS
+#   npx wrangler secret put SUPABASE_KEY
+#   npx wrangler secret put FACILITATOR_API_KEY
+#
+# For `wrangler dev`, put local values (e.g. WALLET_ADDRESS, FACILITATOR_URL=mock)
+# in a .dev.vars file (gitignored).
+
+# ---------- Mainnet: a separate Worker (archibase-mainnet), real USDC on Base ----------
+#   npx wrangler deploy --env mainnet
+# Secrets (set in the dashboard on archibase-mainnet, type "Secret", or `wrangler secret put … --env mainnet`):
+#   WALLET_ADDRESS, SUPABASE_KEY, CDP_API_KEY_ID, CDP_API_KEY_SECRET
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 60, period = 60 }
+
+[env.mainnet]
+name = "archibase-mainnet"
+# archibase.dev and www serve the landing page; api.archibase.dev is the address used in docs.
+routes = [
+  { pattern = "archibase.dev", custom_domain = true },
+  { pattern = "www.archibase.dev", custom_domain = true },
+  { pattern = "api.archibase.dev", custom_domain = true },
+]
+
+[env.mainnet.vars]
+X402_NETWORK = "eip155:8453"                                  # Base mainnet
+X402_EXTRA_NETWORKS = "eip155:137,eip155:42161"               # also Polygon and Arbitrum (same wallet, each chain's USDC)
+PRICE_USD = "0.02"
+VECTOR_PRICE_USD = "0.10"
+FACILITATOR_URL = "cdp"                                       # Coinbase Developer Platform facilitator
+# Set DATABASE_URL to your own Supabase project before deploying the catalogue-backed API.
+PUBLIC_BASE_URL = "https://api.archibase.dev"
+SITE_URL = "https://archibase.dev"                   # canonical site; www.archibase.dev redirects here
+
+[[env.mainnet.ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 60, period = 60 }

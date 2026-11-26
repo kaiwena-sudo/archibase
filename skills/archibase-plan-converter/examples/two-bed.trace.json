@@ -1,0 +1,41 @@
+{
+  "plan_id": "example-two-bed-0001",
+  "style": "unspecified",
+  "building_type": "residential",
+  "provenance": {
+    "source": "synthetic",
+    "built": false,
+    "license": "CC0-1.0",
+    "author": "Archibase skill example",
+    "attribution": "Hand-made worked example for the archibase-plan-converter skill. Not a real building."
+  },
+  "transcription": {
+    "method": "Hand-drawn coordinates in metres for a made-up two-bedroom flat",
+    "scale_basis": "Invented: 0.2 m walls, 0.8 m doors",
+    "confidence": "high",
+    "notes": "Rooms are the inside faces of walls. Kitchen and living room are open to each other, so their outlines touch."
+  },
+  "rooms": [
+    { "id": "living_1", "type": "living", "polygon": [[0, 3.8], [5.2, 3.8], [5.2, 7.4], [0, 7.4]] },
+    { "id": "kitchen_1", "type": "kitchen", "polygon": [[5.2, 3.8], [8, 3.8], [8, 7.4], [5.2, 7.4]], "fixtures": ["sink", "kitchen"] },
+    { "id": "hallway_1", "type": "hallway", "polygon": [[3.8, 2.6], [8, 2.6], [8, 3.6], [3.8, 3.6]] },
+    { "id": "bedroom_1", "type": "bedroom", "polygon": [[0, 0], [3.6, 0], [3.6, 3.6], [0, 3.6]] },
+    { "id": "bathroom_1", "type": "bathroom", "polygon": [[3.8, 0], [5.4, 0], [5.4, 2.4], [3.8, 2.4]], "fixtures": ["bathtub", "sink", "toilet"] },
+    { "id": "bedroom_2", "type": "bedroom", "polygon": [[5.6, 0], [8, 0], [8, 2.4], [5.6, 2.4]] }
+  ],
+  "doors": [
+    { "type": "entrance_door", "from": [8.1, 2.8], "to": [8.1, 3.4] },
+    { "from": [3.9, 3.7], "to": [4.7, 3.7] },
+    { "from": [3.7, 2.7], "to": [3.7, 3.5] },
+    { "from": [4.2, 2.5], "to": [5.0, 2.5] },
+    { "from": [6.4, 2.5], "to": [7.2, 2.5] }
+  ],
+  "windows": [
+    { "from": [-0.1, 4.6], "to": [-0.1, 6.6] },
+    { "from": [1.0, 7.5], "to": [3.0, 7.5] },
+    { "from": [8.1, 4.8], "to": [8.1, 6.2] },
+    { "from": [0.8, -0.1], "to": [2.8, -0.1] },
+    { "from": [4.2, -0.1], "to": [5.0, -0.1] },
+    { "from": [8.1, 0.6], "to": [8.1, 1.8] }
+  ]
+}

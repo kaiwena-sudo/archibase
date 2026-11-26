@@ -1,0 +1,4 @@
+{
+  "about": "ResPlan IDs removed at the request of a rights holder (via the ResPlan authors' takedown process or directly). scripts/import/resplan.py skips these; also delete them from the database (plan_id = 'rp-<id>').",
+  "removed_ids": []
+}
