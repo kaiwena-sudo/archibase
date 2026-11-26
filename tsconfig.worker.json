@@ -1,11 +1,10 @@
 {
-  // Type-checks the Cloudflare Worker entry, which imports data/plans.json from
-  // outside src/ and is bundled by wrangler rather than emitted by tsc.
+  // Type-check the Worker entry point; Wrangler handles deployment bundling.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": true,
     "rootDir": "."
   },
-  "include": ["src", "data/plans.json"],
+  "include": ["src"],
   "exclude": []
 }

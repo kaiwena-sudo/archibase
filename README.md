@@ -195,7 +195,7 @@ Every record carries a `provenance` object, and buyers can filter on it (`built=
 
 | `source` | What it is | Rules enforced by the validator |
 |---|---|---|
-| `synthetic` | Hand-made sample data (the 6 bundled plans) | `built: false` |
+| `synthetic` | Generated test inputs and made-up examples; not production catalogue records | `built: false` |
 | `habs` | Library of Congress HABS/HAER/HALS measured drawings | `built: true`, `public-domain`, loc.gov `source_url` |
 | `commissioned` | Paid work from students or firms | licence `owned`, `author`, and an internal `rights_ref` (signed agreement) |
 | `dataset` | Third-party open dataset | `source_url`; CC-BY needs an `attribution` line |
