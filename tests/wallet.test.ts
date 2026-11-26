@@ -27,8 +27,11 @@ describe("wallet helper", () => {
     const dir = await tmp();
     const w = await newWallet(dir, "payee-1", { purpose: "payee" });
     expect(w).not.toHaveProperty("privateKey");
-    expect((await stat(dir)).mode & 0o777).toBe(0o700);
-    expect((await stat(w.file)).mode & 0o777).toBe(0o600);
+    // Windows ACLs do not map to the POSIX mode bits exposed by stat().
+    if (process.platform !== "win32") {
+      expect((await stat(dir)).mode & 0o777).toBe(0o700);
+      expect((await stat(w.file)).mode & 0o777).toBe(0o600);
+    }
     const stored = JSON.parse(await readFile(w.file, "utf8"));
     expect(stored).toMatchObject({ name: "payee-1", address: w.address, network: "eip155:84532", purpose: "payee" });
     expect(stored.privateKey).toMatch(/^0x[0-9a-f]{64}$/);
@@ -77,9 +80,10 @@ describe("wallet helper", () => {
     expect(checkAddressFormat("0x0000000000000000000000000000000000000001")).toEqual({
       ok: true,
       address: "0x0000000000000000000000000000000000000001",
+      note: "no checksum to verify (all one case)",
     });
     // EIP-55 example with one checksum character deliberately changed.
-    expect(checkAddressFormat("0x5Aeda56215b167893e80B4fE645BA6d5Bab767DE")).toMatchObject({ ok: false, reason: /checksum/ });
+    expect(checkAddressFormat("0x5aeda56215b167893e80B4fE645BA6d5Bab767DE")).toMatchObject({ ok: false, reason: /checksum/ });
     expect(checkAddressFormat("0x" + "0".repeat(40))).toMatchObject({ ok: false, reason: /zero address/ });
     expect(checkAddressFormat("0x1234")).toMatchObject({ ok: false });
     expect(checkAddressFormat("hello")).toMatchObject({ ok: false });

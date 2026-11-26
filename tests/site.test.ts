@@ -149,7 +149,7 @@ describe("explorer page", () => {
   it("embeds exactly the browser scripts in src/site/client (run `npm run build:client` after editing them)", async () => {
     const { readFileSync } = await import("node:fs");
     const bundle = await import("../src/site/client-bundle.js");
-    expect(bundle.EXPLORE_JS).toBe(readFileSync("src/site/client/explore.js", "utf8"));
+    expect(bundle.EXPLORE_JS).toBe(readFileSync("src/site/client/explore.js", "utf8").replace(/\r\n?/g, "\n"));
   });
 
   it("links the free sample and credits from the landing page, docs and llms.txt", async () => {

@@ -238,6 +238,6 @@ describe("402 body is directly usable by JSON-only agents", () => {
     expect(plan).toMatchObject({ plan_id: "ab-modern-3br-0004", total_sqft: 2240 });
     expect(plan).not.toHaveProperty("total_area_m2");
     expect(plan.adjacency_graph.units).toBe("sqft");
-    expect(plan.adjacency_graph.nodes.find((n: any) => n.id === "great_room").area).toBe(480);
+    expect(plan.adjacency_graph.nodes.find((n: any) => n.id === "living").area).toBe(1669);
   });
 });

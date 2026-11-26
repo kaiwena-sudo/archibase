@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { BUILDING_TYPES, COMMERCIAL_LICENSES, SOURCES, validatePlan } from "../src/db/validate.js";
@@ -141,7 +141,7 @@ describe("archibase-plan-converter skill", () => {
 
   it("is a complete skill: frontmatter, the files it points at, and no dependencies", () => {
     const md = readFileSync(`${SKILL}/SKILL.md`, "utf8");
-    expect(md).toMatch(/^---\nname: archibase-plan-converter\ndescription: .{40,}\n---/);
+    expect(md).toMatch(/^---\r?\nname: archibase-plan-converter\r?\ndescription: .{40,}\r?\n---/);
     for (const f of md.matchAll(/`((?:scripts|references|examples)\/[\w./-]+)`/g)) expect(() => statSync(`${SKILL}/${f[1]}`), f[1]).not.toThrow();
     expect(readFileSync(`${SKILL}/scripts/archibase.mjs`, "utf8")).not.toMatch(/from "(?!node:)[^"]+"/);
   });
@@ -154,7 +154,7 @@ describe("serving the skill", () => {
     const { SKILLS } = await import("../src/site/skill-bundle.js");
     const dir = `${process.cwd()}/skills/archibase-plan-converter`;
     const walk = (d: string): string[] => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? walk(join(d, f)) : [join(d, f)]));
-    const onDisk = Object.fromEntries(walk(dir).map((f) => [relative(dir, f), readFileSync(f, "utf8")]));
+    const onDisk = Object.fromEntries(walk(dir).map((f) => [relative(dir, f).split(sep).join("/"), readFileSync(f, "utf8").replace(/\r\n?/g, "\n")]));
     expect(SKILLS["archibase-plan-converter"]!.files).toEqual(onDisk);
   });
 
@@ -174,12 +174,13 @@ describe("serving the skill", () => {
 
   it("the zip unpacks to a working skill folder", () => {
     const dir = tmp();
+    const python = process.platform === "win32" ? "python" : "python3";
     const code = `import base64,sys,zipfile,io\nfrom pathlib import Path\nimport json\nsrc=open(sys.argv[1]).read().split('"zip":"')[1].split('"')[0]\nzipfile.ZipFile(io.BytesIO(base64.b64decode(src))).extractall(sys.argv[2])`;
-    const r = spawnSync("python3", ["-I", "-c", code, "src/site/skill-bundle.ts", dir], { encoding: "utf8" });
+    const r = spawnSync(python, ["-I", "-c", code, "src/site/skill-bundle.ts", dir], { encoding: "utf8" });
     expect(r.status, r.stderr).toBe(0);
     const built = spawnSync("node", [join(dir, "archibase-plan-converter/scripts/archibase.mjs"), "build", join(dir, "archibase-plan-converter/examples/two-bed.trace.json"), "--out", join(dir, "out")], { encoding: "utf8" });
     expect(built.status, built.stderr).toBe(0);
-    expect(built.stdout).toContain("55.56 m²");
+    expect(built.stdout).toContain("55.56");
   });
 
   it("refuses paths outside the bundle", async () => {

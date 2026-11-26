@@ -326,24 +326,26 @@ The site's catalogue figures come from the `catalogue_stats` materialized view, 
 
 ## Deploy to Cloudflare Workers
 
-The same app runs on Workers via `src/worker.ts`. Configure `DATABASE_URL` for your own Supabase project, or provide your own `data/plans.json` when bundling the Worker. The production catalogue is not included here.
+The same app runs on Workers via `src/worker.ts`. The Worker requires your own Supabase catalogue; the production catalogue is not included here. `WALLET_ADDRESS`, `DATABASE_URL`, and `SUPABASE_KEY` must be configured as Worker secrets. Wrangler checks for them before deployment, and the Worker returns a configuration error if they are missing.
 
 ```bash
-# local (workerd): put dev values in .dev.vars, e.g.
+# local (workerd): put development values in .dev.vars, e.g.
 #   WALLET_ADDRESS=0x...
+#   DATABASE_URL=https://<project>.supabase.co
+#   SUPABASE_KEY=<secret key>
 #   FACILITATOR_URL=mock
 npm run dev:worker                       # http://localhost:8787
 API_URL=http://localhost:8787 npm run demo
 
-# production
-npx wrangler secret put WALLET_ADDRESS          # testnet Worker
-npx wrangler secret put WALLET_ADDRESS --env mainnet
-npx wrangler secret put SUPABASE_KEY          # if using Supabase
-npx wrangler secret put FACILITATOR_API_KEY   # if your facilitator needs one
-npm run deploy
+# production: add all required secrets in the Cloudflare dashboard, then deploy each Worker
+# testnet Worker: WALLET_ADDRESS, DATABASE_URL, SUPABASE_KEY
+# mainnet Worker: WALLET_ADDRESS, DATABASE_URL, SUPABASE_KEY, CDP_API_KEY_ID, CDP_API_KEY_SECRET
+# FACILITATOR_API_KEY is optional when your facilitator requires a bearer token.
+npm run deploy                               # testnet Worker
+npm run deploy -- --env mainnet              # mainnet Worker, if enabled
 ```
 
-Set the receiving wallet as a Worker secret with the commands above. Set `X402_NETWORK`, `PRICE_USD`, `FACILITATOR_URL`, `DATABASE_URL` and `PUBLIC_BASE_URL` under `[vars]` in `wrangler.toml` or in the dashboard. `nodejs_compat` is required.
+Cloudflare environments have separate secrets. Add each Worker's full required set in the dashboard before its first deploy. Set `X402_NETWORK`, `PRICE_USD`, `FACILITATOR_URL`, and `PUBLIC_BASE_URL` in `wrangler.toml` or in the dashboard. `nodejs_compat` is required.
 
 ## Development
 

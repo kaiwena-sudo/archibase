@@ -25,9 +25,10 @@ export interface Env {
   /** Secrets for FACILITATOR_URL=cdp (Coinbase Developer Platform, mainnet). */
   CDP_API_KEY_ID?: string;
   CDP_API_KEY_SECRET?: string;
-  DATABASE_URL?: string;
+  /** Secret: required Supabase project URL for the catalogue. */
+  DATABASE_URL: string;
   /** Secret: `wrangler secret put SUPABASE_KEY` */
-  SUPABASE_KEY?: string;
+  SUPABASE_KEY: string;
   PUBLIC_BASE_URL?: string;
   /** Cloudflare rate-limit binding (wrangler.toml [[ratelimits]]). */
   RATE_LIMITER?: { limit(opts: { key: string }): Promise<{ success: boolean }> };
@@ -46,6 +47,12 @@ let app: Hono | undefined;
 
 function getApp(env: Env): Hono {
   if (app) return app;
+  for (const name of ["WALLET_ADDRESS", "DATABASE_URL", "SUPABASE_KEY"] as const) {
+    if (!env[name]?.trim()) throw new Error(`${name} secret is required for the catalogue-backed Worker`);
+  }
+  if (env.FACILITATOR_URL === "cdp" && (!env.CDP_API_KEY_ID?.trim() || !env.CDP_API_KEY_SECRET?.trim())) {
+    throw new Error("CDP_API_KEY_ID and CDP_API_KEY_SECRET secrets are required when FACILITATOR_URL=cdp");
+  }
   // Only string bindings are relevant; loadPaymentConfig/createPlanStore read plain string maps.
   const vars = env as unknown as Record<string, string | undefined>;
   const cfg = loadPaymentConfig(vars as NodeJS.ProcessEnv);

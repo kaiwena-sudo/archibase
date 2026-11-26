@@ -5,16 +5,18 @@ import { join } from "node:path";
 import type { FloorPlan } from "../src/db/client.js";
 import type { PlanVector } from "../src/db/vectors.js";
 
-const specs = [
+type PlanSpec = Pick<FloorPlan, "plan_id" | "style" | "total_area_m2" | "bedrooms">;
+
+const specs: PlanSpec[] = [
   { plan_id: "ab-modern-2br-0001", style: "modern", total_area_m2: 109.63, bedrooms: 2 },
   { plan_id: "ab-industrial-loft-0002", style: "industrial", total_area_m2: 126.35, bedrooms: 2 },
   { plan_id: "ab-craftsman-3br-0003", style: "craftsman", total_area_m2: 178.37, bedrooms: 3 },
   { plan_id: "ab-modern-3br-0004", style: "modern", total_area_m2: 208.1, bedrooms: 3 },
   { plan_id: "ab-industrial-2br-0005", style: "industrial", total_area_m2: 134.71, bedrooms: 2 },
   { plan_id: "ab-farmhouse-4br-0006", style: "farmhouse", total_area_m2: 245, bedrooms: 4 },
-] as const;
+];
 
-function makePlan(spec: (typeof specs)[number]): FloorPlan {
+function makePlan(spec: PlanSpec): FloorPlan {
   const nodes = [
     { id: "living", type: "living_room", area: spec.total_area_m2 - 17 - spec.bedrooms * 12 },
     { id: "kitchen", type: "kitchen", area: 10 },
@@ -67,12 +69,14 @@ const commissioned = makePlan({ plan_id: "cm-student-courtyard-0001", style: "mo
 commissioned.provenance = { source: "commissioned", built: false, license: "owned", author: "Example Studio" };
 (commissioned as FloorPlan & { rights_ref: string }).rights_ref = "AGREEMENT-EXAMPLE";
 
-const rejected = makePlan({ plan_id: "bad-scraped-0001", style: "modern", total_area_m2: 82, bedrooms: 1 });
-rejected.provenance = {
-  source: "dataset",
-  built: false,
-  license: "CC-BY-NC-4.0" as FloorPlan["provenance"]["license"],
-  source_url: "https://example.org/dataset",
+const rejected = {
+  ...makePlan({ plan_id: "bad-scraped-0001", style: "modern", total_area_m2: 82, bedrooms: 1 }),
+  provenance: {
+    source: "dataset",
+    built: false,
+    license: "CC-BY-NC-4.0",
+    source_url: "https://example.org/dataset",
+  },
 };
 
 export const TEST_INCOMING: unknown[] = [habs, commissioned, rejected];

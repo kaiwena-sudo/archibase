@@ -9,10 +9,12 @@
  */
 import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("../skills/", import.meta.url).pathname;
+const root = fileURLToPath(new URL("../skills/", import.meta.url));
 const names = readdirSync(root).filter((n) => statSync(join(root, n)).isDirectory()).sort();
+const python = process.platform === "win32" ? "python" : "python3";
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? walk(join(dir, f)) : [join(dir, f)])).sort();
@@ -22,8 +24,8 @@ const skills: Record<string, { description: string; files: Record<string, string
 for (const name of names) {
   const dir = join(root, name);
   const files: Record<string, string> = {};
-  for (const f of walk(dir)) files[relative(dir, f)] = readFileSync(f, "utf8");
-  const front = /^---\n([\s\S]*?)\n---/.exec(files["SKILL.md"] ?? "");
+  for (const f of walk(dir)) files[relative(dir, f).split(sep).join("/")] = readFileSync(f, "utf8").replace(/\r\n?/g, "\n");
+  const front = /^---\r?\n([\s\S]*?)\r?\n---/.exec(files["SKILL.md"] ?? "");
   const description = /^description:\s*(.+)$/m.exec(front?.[1] ?? "")?.[1]?.trim();
   if (!description) throw new Error(`${name}/SKILL.md needs a frontmatter description`);
 
@@ -40,7 +42,7 @@ with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr(info, files[path].encode("utf8"))
 print(base64.b64encode(buf.getvalue()).decode())
 `;
-  const r = spawnSync("python3", ["-I", "-c", py, name], { input: JSON.stringify(files), encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  const r = spawnSync(python, ["-I", "-c", py, name], { input: JSON.stringify(files), encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   if (r.status !== 0) throw new Error(`zip failed: ${r.stderr}`);
   skills[name] = { description, files, zip: r.stdout.trim() };
 }

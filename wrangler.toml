@@ -15,6 +15,10 @@ routes = [{ pattern = "testnet.archibase.dev", custom_domain = true }]
 [observability]
 enabled = true
 
+# Fail deployment when the catalogue or payment receiver credentials are missing.
+[secrets]
+required = ["WALLET_ADDRESS", "DATABASE_URL", "SUPABASE_KEY"]
+
 [vars]
 X402_NETWORK = "eip155:84532"         # eip155:8453 = Base mainnet (needs a mainnet facilitator)
 PRICE_USD = "0.02"
@@ -22,14 +26,12 @@ VECTOR_PRICE_USD = "0.10"
 # Geometry: read from Supabase (floor_plan_vectors) when DATABASE_URL is Supabase. Override with
 # VECTOR_STORE_URL = "https://<bucket>" (files + index.json) or "none".
 FACILITATOR_URL = "https://x402.org/facilitator"
-# Set WALLET_ADDRESS as a Worker secret before deploying.
-# Set DATABASE_URL to your own Supabase project, or bundle your own data/plans.json.
+# Set WALLET_ADDRESS, DATABASE_URL, and SUPABASE_KEY as Worker secrets before deploying.
 PUBLIC_BASE_URL = "https://testnet.archibase.dev"
 SITE_URL = "https://testnet.archibase.dev"           # canonical page address (share tags)
 #
 # Secrets — never put these in this file:
-#   npx wrangler secret put WALLET_ADDRESS
-#   npx wrangler secret put SUPABASE_KEY
+#   WALLET_ADDRESS, DATABASE_URL, SUPABASE_KEY
 #   npx wrangler secret put FACILITATOR_API_KEY
 #
 # For `wrangler dev`, put local values (e.g. WALLET_ADDRESS, FACILITATOR_URL=mock)
@@ -37,8 +39,7 @@ SITE_URL = "https://testnet.archibase.dev"           # canonical page address (s
 
 # ---------- Mainnet: a separate Worker (archibase-mainnet), real USDC on Base ----------
 #   npx wrangler deploy --env mainnet
-# Secrets (set in the dashboard on archibase-mainnet, type "Secret", or `wrangler secret put … --env mainnet`):
-#   WALLET_ADDRESS, SUPABASE_KEY, CDP_API_KEY_ID, CDP_API_KEY_SECRET
+# Mainnet requires its own secrets; Wrangler environments do not inherit secrets.
 [[ratelimits]]
 name = "RATE_LIMITER"
 namespace_id = "1001"
@@ -52,6 +53,9 @@ routes = [
   { pattern = "www.archibase.dev", custom_domain = true },
   { pattern = "api.archibase.dev", custom_domain = true },
 ]
+
+[env.mainnet.secrets]
+required = ["WALLET_ADDRESS", "DATABASE_URL", "SUPABASE_KEY", "CDP_API_KEY_ID", "CDP_API_KEY_SECRET"]
 
 [env.mainnet.vars]
 X402_NETWORK = "eip155:8453"                                  # Base mainnet
