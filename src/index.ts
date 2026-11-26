@@ -41,6 +41,8 @@ const SEARCH_PATH = "/api/v1/plans/search";
 const WELL_KNOWN_PATH = "/.well-known/x402.json";
 const VECTOR_PATH = "/api/v1/plans/:plan_id/vector";
 const vectorPath = (planId: string) => VECTOR_PATH.replace(":plan_id", planId);
+/** Directories probe the route with its literal template as the id; both spellings are in use. */
+const PLAN_ID_PLACEHOLDERS = new Set([":plan_id", "{plan_id}"]);
 const SAMPLE_PATH = "/api/v1/sample";
 const COUNT_PATH = "/api/v1/count";
 const VECTOR_DESCRIPTION =
@@ -692,7 +694,11 @@ export function createApp({ store, gateway, vectors = new NoVectorStore(), publi
     });
   });
 
-  /** Check the plan id, units and that geometry exists *before* the paywall: nobody pays for a 404. */
+  /**
+   * Check the plan id, units and that geometry exists *before* the paywall: nobody pays for a 404.
+   * The one exception is an unpaid call on a placeholder id, which gets the 402 terms so directory
+   * probes can read them. With any payment or API key attached it is a 404 like any unknown id.
+   */
   const validateVectorRequest: MiddlewareHandler = async (c, next) => {
     const planId = c.req.param("plan_id") ?? "";
     const q = c.req.query();
@@ -701,7 +707,12 @@ export function createApp({ store, gateway, vectors = new NoVectorStore(), publi
     if (unknown.length || !(UNIT_SYSTEMS as readonly string[]).includes(units)) {
       return c.json({ error: "invalid_query", details: ['only "units" (metric|imperial) is accepted'], schema: vectorInputSchema }, 400);
     }
-    if (!PLAN_ID.test(planId) || !(await vectors.has(planId))) {
+    const isProbe =
+      PLAN_ID_PLACEHOLDERS.has(planId) &&
+      !extractKey(c.req.raw.headers) &&
+      !c.req.header("payment-signature") &&
+      !c.req.header("x-payment");
+    if (!isProbe && (!PLAN_ID.test(planId) || !(await vectors.has(planId)))) {
       return c.json({ error: "vector_not_found", plan_id: planId }, 404);
     }
     c.set("units" as never, units as never);

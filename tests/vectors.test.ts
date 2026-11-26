@@ -45,6 +45,34 @@ describe("vector route", () => {
     }
   });
 
+  const PLACEHOLDERS = [":plan_id", "%3Aplan_id", "{plan_id}", "%7Bplan_id%7D"];
+
+  it("answers unpaid probes of the route template with the payment terms", async () => {
+    for (const id of PLACEHOLDERS) {
+      const res = await app.request(`/api/v1/plans/${id}/vector`);
+      expect(res.status, id).toBe(402);
+      expect(challengeFrom(res).accepts[0]!.amount, id).toBe("100000");
+    }
+  });
+
+  it("never takes payment or credits for a placeholder id", async () => {
+    const challenge = challengeFrom(await app.request(VEC));
+    const attempts: Record<string, string>[] = [
+      { "PAYMENT-SIGNATURE": simulatedPayment(challenge) },
+      { "X-PAYMENT": simulatedPayment(challenge) },
+      { "X-API-Key": "ak_anything" },
+      { Authorization: "Bearer ak_anything" },
+    ];
+    for (const id of PLACEHOLDERS) {
+      for (const headers of attempts) {
+        const res = await app.request(`/api/v1/plans/${id}/vector`, { headers });
+        const label = `${id} ${Object.keys(headers)[0]}`;
+        expect(res.status, label).toBe(404);
+        expect(res.headers.get("payment-response"), label).toBeNull();
+      }
+    }
+  });
+
   it("400s before the paywall for unknown query parameters or units", async () => {
     for (const q of ["?foo=1", "?units=cubits"]) {
       const res = await app.request(`${VEC}${q}`);
