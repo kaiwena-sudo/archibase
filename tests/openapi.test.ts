@@ -9,7 +9,8 @@ describe("OpenAPI document (served from src/openapi.json)", () => {
     expect(r.status).toBe(200);
     const doc = await r.json();
     expect(doc.openapi).toBe("3.1.0");
-    expect(JSON.stringify(doc.info)).not.toMatch(/@/);
+    // Only the public contact address may appear; no personal addresses.
+    expect(JSON.stringify(doc.info).match(/[\w.+-]+@[\w.-]+/g) ?? []).toEqual(["kaizim@archibase.dev"]);
     expect(doc.externalDocs.url).toMatch(/^https:\/\//);
   });
 
